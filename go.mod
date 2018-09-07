@@ -1,4 +1,4 @@
-module github.com/sclasen/go-metrics-cloudwatch
+module github.com/jan-xyz/go-metrics-cloudwatch
 
 require (
 	github.com/aws/aws-sdk-go v0.0.0-20150728191543-ab85612d91c5

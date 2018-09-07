@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	metrics "github.com/rcrowley/go-metrics"
-	"github.com/sclasen/go-metrics-cloudwatch/config"
+	"github.com/jan-xyz/go-metrics-cloudwatch/config"
 )
 
 type MockPutMetricsClient struct {

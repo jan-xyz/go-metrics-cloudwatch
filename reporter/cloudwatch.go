@@ -11,8 +11,6 @@ import (
 	"github.com/sclasen/go-metrics-cloudwatch/config"
 )
 
-var Silence = false
-
 //blocks, run as go reporter.Cloudwatch(cfg)
 func Cloudwatch(registry metrics.Registry, cfg *config.Config) {
 	ticks := time.NewTicker(cfg.ReportingInterval)
@@ -49,11 +47,11 @@ func putMetrics(cfg *config.Config, data []*cloudwatch.MetricDatum) {
 	}
 	_, err := client.PutMetricData(req)
 	if err != nil {
-		if !Silence {
+		if !cfg.Silence {
 			log.Printf("component=cloudwatch-reporter fn=emitMetrics at=error error=%s", err)
 		}
 	} else {
-		if !Silence {
+		if !cfg.Silence {
 			log.Printf("component=cloudwatch-reporter fn=emitMetrics at=put-metrics count=%d", len(req.MetricData))
 		}
 	}
@@ -79,7 +77,7 @@ func metricsData(registry metrics.Registry, cfg *config.Config) []*cloudwatch.Me
 		case metrics.Counter:
 			counters += 1
 			count := float64(metric.Count())
-			if cfg.Filter.ShouldReport(name, count) {
+			if cfg.Filter.ShouldReport(name, count, *cfg) {
 				datum := aDatum(name)
 				datum.Unit = aws.String(cloudwatch.StandardUnitCount)
 				datum.Value = aws.Float64(count)
@@ -92,7 +90,7 @@ func metricsData(registry metrics.Registry, cfg *config.Config) []*cloudwatch.Me
 		case metrics.Gauge:
 			gagues += 1
 			value := float64(metric.Value())
-			if cfg.Filter.ShouldReport(name, value) {
+			if cfg.Filter.ShouldReport(name, value, *cfg) {
 				datum := aDatum(name)
 				datum.Unit = aws.String(cloudwatch.StandardUnitCount)
 				datum.Value = aws.Float64(float64(value))
@@ -102,7 +100,7 @@ func metricsData(registry metrics.Registry, cfg *config.Config) []*cloudwatch.Me
 		case metrics.GaugeFloat64:
 			gagues += 1
 			value := float64(metric.Value())
-			if cfg.Filter.ShouldReport(name, value) {
+			if cfg.Filter.ShouldReport(name, value, *cfg) {
 				datum := aDatum(name)
 				datum.Unit = aws.String(cloudwatch.StandardUnitCount)
 				datum.Value = aws.Float64(value)
@@ -113,11 +111,11 @@ func metricsData(registry metrics.Registry, cfg *config.Config) []*cloudwatch.Me
 			histos += 1
 			h := metric.Snapshot()
 			value := float64(h.Count())
-			if cfg.Filter.ShouldReport(name, value) {
+			if cfg.Filter.ShouldReport(name, value, *cfg) {
 				for _, p := range cfg.Filter.Percentiles(name) {
 					pname := fmt.Sprintf("%s-perc%.3f", name, p)
 					pvalue := h.Percentile(p)
-					if cfg.Filter.ShouldReport(pname, pvalue) {
+					if cfg.Filter.ShouldReport(pname, pvalue, *cfg) {
 						datum := aDatum(pname)
 						datum.Unit = aws.String(cloudwatch.StandardUnitCount)
 						datum.Value = aws.Float64(pvalue)
@@ -137,7 +135,7 @@ func metricsData(registry metrics.Registry, cfg *config.Config) []*cloudwatch.Me
 				fmt.Sprintf("%s.mean", name):           m.RateMean(),
 			}
 			for n, v := range dataz {
-				if cfg.Filter.ShouldReport(n, v) {
+				if cfg.Filter.ShouldReport(n, v, *cfg) {
 					datum := aDatum(n)
 					datum.Value = aws.Float64(v)
 					data = append(data, datum)
@@ -158,7 +156,7 @@ func metricsData(registry metrics.Registry, cfg *config.Config) []*cloudwatch.Me
 				fmt.Sprintf("%s.mean", name):           t.RateMean(),
 			}
 			for n, v := range dataz {
-				if cfg.Filter.ShouldReport(n, v) {
+				if cfg.Filter.ShouldReport(n, v, *cfg) {
 					datum := aDatum(n)
 					datum.Value = aws.Float64(v)
 					data = append(data, datum)
@@ -168,7 +166,7 @@ func metricsData(registry metrics.Registry, cfg *config.Config) []*cloudwatch.Me
 			for _, p := range cfg.Filter.Percentiles(name) {
 				pname := fmt.Sprintf("%s-perc%.3f", name, p)
 				pvalue := t.Percentile(p)
-				if cfg.Filter.ShouldReport(pname, pvalue) {
+				if cfg.Filter.ShouldReport(pname, pvalue, *cfg) {
 					datum := aDatum(pname)
 					datum.Value = aws.Float64(pvalue)
 					data = append(data, datum)
@@ -180,7 +178,7 @@ func metricsData(registry metrics.Registry, cfg *config.Config) []*cloudwatch.Me
 	})
 	total := counters + gagues + histos + meters + timers
 	totalOut := countersOut + gaguesOut + histosOut + metersOut + timersOut
-	if !Silence {
+	if !cfg.Silence {
 		log.Printf("component=cloudwatch-reporter fn=metricsData at=sources total=%d counters=%d gagues=%d histos=%d meters=%d timers=%d", total, counters, gagues, histos, meters, timers)
 		log.Printf("component=cloudwatch-reporter fn=metricsData at=targets total=%d counters=%d gagues=%d histos=%d meters=%d timers=%d", totalOut, countersOut, gaguesOut, histosOut, metersOut, timersOut)
 	}

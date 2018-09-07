@@ -1,4 +1,5 @@
 GO_PACKAGES := $(shell go list ./... | sed 's_github.com/sclasen/go-metrics-cloudwatch_._')
+GO111MODULE := on
 
 
 all: ready test

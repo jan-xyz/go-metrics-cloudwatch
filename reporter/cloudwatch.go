@@ -7,8 +7,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	metrics "github.com/rcrowley/go-metrics"
 	"github.com/sclasen/go-metrics-cloudwatch/config"
-	"github.com/rcrowley/go-metrics"
 )
 
 //blocks, run as go reporter.Cloudwatch(cfg)

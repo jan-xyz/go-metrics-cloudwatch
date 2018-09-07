@@ -27,17 +27,20 @@ type Config struct {
 	Namespace             string
 	StaticDimensions      map[string]string
 	ResetCountersOnReport bool
+	Silence               bool
 }
 
 type Filter interface {
-	ShouldReport(metric string, value float64) bool
+	ShouldReport(metric string, value float64, config Config) bool
 	Percentiles(metric string) []float64
 }
 
 type NoFilter struct{}
 
-func (n *NoFilter) ShouldReport(metric string, value float64) bool {
-	log.Printf("at=should-report metric=%s ", metric)
+func (n *NoFilter) ShouldReport(metric string, value float64, cfg Config) bool {
+	if !cfg.Silence {
+		log.Printf("at=should-report metric=%s ", metric)
+	}
 	return true
 }
 
@@ -47,8 +50,10 @@ func (n *NoFilter) Percentiles(metric string) []float64 {
 
 type AllFilter struct{}
 
-func (n *AllFilter) ShouldReport(metric string, value float64) bool {
-	log.Printf("at=no-report metric=%s ", metric)
+func (n *AllFilter) ShouldReport(metric string, value float64, cfg Config) bool {
+	if !cfg.Silence {
+		log.Printf("at=no-report metric=%s ", metric)
+	}
 	return false
 }
 

@@ -24,6 +24,7 @@ metricsConf := &config.Config{
 		Filter:            &config.NoFilter{},
 		ReportingInterval: 1 * time.Minute,
 		StaticDimensions:  []map[string]string{"name":"value"},
+		Silence:           true
 	}
 go reporter.Cloudwatch(registry, metricsConf)
 
